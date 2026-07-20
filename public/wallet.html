@@ -30,7 +30,7 @@ async function load() {
   document.getElementById('rows').innerHTML = txs.map(t => {
     const isCharge = t.type === 'charge';
     const outgoing = t.sender_name === me.username;
-    const desc = isCharge ? '잔액 충전' : `${t.product_name || '상품'} · ${outgoing ? '→ ' + t.receiver_name : '← ' + t.sender_name}`;
+    const desc = isCharge ? '잔액 충전' : `${esc(t.product_name || '상품')} · ${outgoing ? '→ ' + esc(t.receiver_name) : '← ' + esc(t.sender_name)}`;
     const sign = isCharge || !outgoing ? '+' : '−';
     return `<tr><td>${t.created_at}</td><td>${isCharge ? '충전' : '송금'}</td><td>${desc}</td>
       <td>${sign}${fmt(t.amount)}</td><td><span class="badge ${t.status}">${STATUS_KO[t.status]}</span></td></tr>`;
