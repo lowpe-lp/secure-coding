@@ -38,7 +38,7 @@ async function load() {
     <div class="product-card" onclick="location.href='/product.html?id=${p.id}'">
       <div class="thumb" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">${p.image_url ? '' : '📦'}</div>
       <div class="info">
-        <div>${p.name} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
+        <div>${esc(p.name)} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
         <div class="price">${fmt(p.price)}</div>
         <div class="muted">${p.region || '지역 미설정'} · ${p.seller}</div>
       </div>
