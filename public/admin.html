@@ -36,8 +36,8 @@ async function tab(name) {
       c.innerHTML = `<h2>유저 목록</h2>
         <table><thead><tr><th>ID</th><th>아이디</th><th>인증</th><th>지역</th><th>상태</th><th>숨김</th><th>처리</th></tr></thead><tbody>` +
         rows.map(u => `
-        <tr><td>${u.id}</td><td>${u.username}${u.role === 'admin' ? ' 👑' : ''}</td>
-        <td>${u.verified ? '✅' : '—'}</td><td>${u.region || '—'}</td>
+        <tr><td>${u.id}</td><td>${esc(u.username)}${u.role === 'admin' ? ' 👑' : ''}</td>
+        <td>${u.verified ? '✅' : '—'}</td><td>${esc(u.region || '—')}</td>
         <td><span class="badge ${u.status === 'active' ? 'confirmed' : 'cancelled'}">${STATUS_KO[u.status]}</span></td>
         <td>${u.hidden ? '🙈' : '—'}</td>
         <td>${u.role === 'admin' ? '' : `
@@ -49,8 +49,8 @@ async function tab(name) {
       c.innerHTML = `<h2>상품 목록</h2>
         <table><thead><tr><th>ID</th><th>상품명</th><th>가격</th><th>판매자</th><th>상태</th><th>숨김</th><th>처리</th></tr></thead><tbody>` +
         rows.map(p => `
-        <tr><td>${p.id}</td><td><a href="/product.html?id=${p.id}">${p.name}</a></td><td>${fmt(p.price)}</td>
-        <td>${p.seller}</td><td><span class="badge ${p.status}">${STATUS_KO[p.status]}</span></td>
+        <tr><td>${p.id}</td><td><a href="/product.html?id=${p.id}">${esc(p.name)}</a></td><td>${fmt(p.price)}</td>
+        <td>${esc(p.seller)}</td><td><span class="badge ${p.status}">${STATUS_KO[p.status]}</span></td>
         <td>${p.hidden ? '🙈' : '—'}</td>
         <td><button class="secondary" onclick="patchProduct(${p.id}, ${p.hidden ? 0 : 1})">${p.hidden ? '숨김 해제' : '숨김'}</button></td></tr>`).join('') + '</tbody></table>';
     } else {
@@ -59,7 +59,7 @@ async function tab(name) {
         <table><thead><tr><th>ID</th><th>유형</th><th>보낸이</th><th>받는이</th><th>상품</th><th>금액</th><th>상태</th><th>일시</th></tr></thead><tbody>` +
         rows.map(t => `
         <tr><td>${t.id}</td><td>${t.type === 'charge' ? '충전' : '송금'}</td>
-        <td>${t.sender_name || '—'}</td><td>${t.receiver_name}</td><td>${t.product_name || '—'}</td>
+        <td>${esc(t.sender_name || '—')}</td><td>${esc(t.receiver_name)}</td><td>${esc(t.product_name || '—')}</td>
         <td>${fmt(t.amount)}</td><td><span class="badge ${t.status}">${STATUS_KO[t.status]}</span></td>
         <td>${t.created_at}</td></tr>`).join('') + '</tbody></table>';
     }
