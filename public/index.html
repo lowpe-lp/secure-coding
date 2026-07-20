@@ -40,7 +40,7 @@ async function load() {
       <div class="info">
         <div>${esc(p.name)} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
         <div class="price">${fmt(p.price)}</div>
-        <div class="muted">${p.region || '지역 미설정'} · ${p.seller}</div>
+      <div class="muted">${esc(p.region || '지역 미설정')} · ${esc(p.seller)}</div>
       </div>
     </div>`).join('');
   document.getElementById('empty').style.display = rows.length ? 'none' : 'block';
