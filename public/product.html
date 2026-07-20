@@ -44,7 +44,7 @@ async function load() {
     const txs = await api('/api/transactions');
     const pend = txs.find(t => t.product_id == pid && t.status === 'pending');
     if (pend) document.getElementById('pendingTx').innerHTML =
-      `<p class="muted">에스크로 진행 중 (구매자: ${pend.sender_name}, ${fmt(pend.amount)})</p>
+      `<p class="muted">에스크로 진행 중 (구매자: ${esc(pend.sender_name)}, ${fmt(pend.amount)})</p>
        <button class="secondary" onclick="cancelTx(${pend.id})">거래 취소(환불)</button>`;
   } else if (me) {
     const soldOut = p.status === 'sold';
