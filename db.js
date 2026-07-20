@@ -102,8 +102,8 @@ const admin = db.prepare("SELECT id FROM users WHERE role='admin'").get();
 if (!admin) {
   const info = db.prepare(
     "INSERT INTO users (username, password_hash, role, verified, region) VALUES (?,?,?,1,'본사')"
-  ).run('admin', bcrypt.hashSync('admin1234', 10), 'admin');
+  ).run('admin', bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin1234', 10), 'admin');
   db.prepare('INSERT INTO wallets (user_id, balance) VALUES (?,0)').run(info.lastInsertRowid);
-  console.log('관리자 계정 생성: admin / admin1234');
+  console.log('관리자 계정 생성: admin (비밀번호는 ADMIN_PASSWORD 환경변수, 미설정 시 admin1234)');
 }
 module.exports = db;

@@ -15,7 +15,8 @@ const RADIUS_KM = 5;          // 위치 필터 기본 반경
 
 app.use(express.json());
 const sessionMw = session({
-  secret: 'marketplace-secret', resave: false, saveUninitialized: false,
+  secret: process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex'),
+  resave: false, saveUninitialized: false,
   cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 });
 app.use(sessionMw);
