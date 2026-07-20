@@ -26,7 +26,7 @@ async function load() {
   const sb = document.getElementById('statusBadge');
   sb.textContent = STATUS_KO[p.status]; sb.className = 'badge ' + p.status;
   document.getElementById('meta').innerHTML =
-    `${p.seller_region || p.region || '지역 미설정'} · 판매자 <a href="/profile.html?id=${p.seller_id}">${p.seller}</a> · ${p.created_at}`;
+    `${esc(p.seller_region || p.region || '지역 미설정')} · 판매자 <a href="/profile.html?id=${p.seller_id}">${esc(p.seller)}</a> · ${p.created_at}`;
   document.getElementById('price').textContent = fmt(p.price);
   document.getElementById('desc').textContent = p.description;
   document.getElementById('logs').innerHTML = p.statusLogs.map(l => `<li>${STATUS_KO[l.status]} — ${l.created_at}</li>`).join('');
