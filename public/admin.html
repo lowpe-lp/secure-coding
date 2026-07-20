@@ -23,7 +23,7 @@ async function tab(name) {
       const rows = await api('/api/admin/reports');
       c.innerHTML = `<h2>신고 목록 (검토 대기 우선)</h2>
         <table><thead><tr><th>ID</th><th>대상</th><th>사유</th><th>신고자</th><th>일시</th><th>상태</th><th>처리</th></tr></thead><tbody>` +
-        rows.sort((a,b) => (a.status==='pending'?0:1) - (b.status==='pending'?0:1)).map(r => `
+       <td>${esc(r.reason)}</td><td>${esc(r.reporter)}</td><td>${r.created_at}</td>
         <tr><td>${r.id}</td><td>${r.target_type === 'user' ? '유저' : '상품'} #${r.target_id}</td>
         <td>${r.reason}</td><td>${r.reporter}</td><td>${r.created_at}</td>
         <td><span class="badge ${r.status === 'pending' ? 'pending' : r.status === 'confirmed' ? 'cancelled' : 'confirmed'}">${
