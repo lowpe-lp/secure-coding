@@ -28,11 +28,15 @@ async function load() {
   const rooms = await api('/api/chat/rooms');
   document.getElementById('rooms').innerHTML = rooms.map(r => {
     const other = r.buyer === me.username ? r.seller : r.buyer;
-    return `<div class="product-card" style="margin-bottom:8px" onclick="openRoom(${r.id}, '${other}', '${r.product_name.replace(/'/g, "\\'")}')">
-      <div class="info"><b>${other}</b> <span class="badge ${r.product_status}">${STATUS_KO[r.product_status]}</span>
-      <div class="muted">${r.product_name}</div>
-      <div class="muted">${r.last_message || '메시지 없음'}</div></div></div>`;
+   return `<div class="product-card" style="margin-bottom:8px"
+         data-id="${r.id}" data-other="${esc(other)}" data-product="${esc(r.product_name)}">
+      <div class="info"><b>${esc(other)}</b> <span class="badge ${r.product_status}">${STATUS_KO[r.product_status]}</span>
+      <div class="muted">${esc(r.product_name)}</div>
+      <div class="muted">${esc(r.last_message || '메시지 없음')}</div></div></div>`;
   }).join('') || '<p class="muted">채팅이 없습니다.</p>';
+  document.querySelectorAll('#rooms .product-card').forEach(el => {
+    el.onclick = () => openRoom(+el.dataset.id, el.dataset.other, el.dataset.product);
+  });
   const q = new URLSearchParams(location.search).get('room');
   if (q) {
     const r = rooms.find(x => x.id == q);
