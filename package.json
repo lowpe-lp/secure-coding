@@ -1,0 +1,14 @@
+{
+  "name": "marketplace",
+  "version": "1.0.0",
+  "description": "중고거래 플랫폼 (에스크로/채팅/위치기반/관리자)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "socket.io": "^4.7.5"
+  }
+}

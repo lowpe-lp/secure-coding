@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>신고하기</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:480px">
+  <div class="card">
+    <h1>신고하기</h1>
+    <p class="muted" id="target"></p>
+    <textarea id="reason" rows="4" placeholder="신고 사유를 구체적으로 작성해주세요. (필수)"></textarea>
+    <div id="msg" class="msg"></div>
+    <button class="danger" style="width:100%" onclick="submit()">신고 제출</button>
+    <p class="muted" style="margin-top:10px">※ 일정 횟수 이상 신고된 대상은 자동으로 숨김 처리되며, 관리자 검토 후 제재가 확정되거나 해제됩니다.</p>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const type = q.get('type'), id = q.get('id');
+document.getElementById('target').textContent = `신고 대상: ${type === 'user' ? '사용자' : '상품'} #${id}`;
+async function submit() {
+  const reason = document.getElementById('reason').value.trim();
+  if (!reason) return show('msg', '신고 사유를 작성해주세요.');
+  try {
+    const r = await api('/api/reports', 'POST', { targetType: type, targetId: +id, reason });
+    show('msg', '신고가 접수되었습니다.' + (r.autoHidden ? ' 누적 신고로 대상이 숨김 처리되어 관리자 검토 대기 중입니다.' : ''), 'ok');
+    setTimeout(() => history.back(), 1500);
+  } catch (e) { show('msg', e.message); }
+}
+renderNav().then(me => { if (!me) location.href = '/login.html'; });
+</script></body></html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>채팅</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container">
+  <div style="display:grid;grid-template-columns:260px 1fr;gap:14px">
+    <div class="card" style="padding:10px">
+      <h2>채팅 목록</h2>
+      <div id="rooms"></div>
+    </div>
+    <div class="card">
+      <h2 id="roomTitle">채팅방을 선택하세요</h2>
+      <div id="chatBox" class="chat-box"></div>
+      <div class="row" style="margin-top:8px">
+        <input id="input" placeholder="메시지 입력" onkeydown="if(event.key==='Enter')send()" disabled>
+        <button id="sendBtn" onclick="send()" disabled>전송</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+<script>
+let me, socket, currentRoom = null;
+async function load() {
+  me = await renderNav();
+  if (!me) return location.href = '/login.html';
+  socket = io();
+  socket.on('message', m => { if (currentRoom && m.room_id === currentRoom) append(m); });
+  const rooms = await api('/api/chat/rooms');
+  document.getElementById('rooms').innerHTML = rooms.map(r => {
+    const other = r.buyer === me.username ? r.seller : r.buyer;
+    return `<div class="product-card" style="margin-bottom:8px" onclick="openRoom(${r.id}, '${other}', '${r.product_name.replace(/'/g, "\\'")}')">
+      <div class="info"><b>${other}</b> <span class="badge ${r.product_status}">${STATUS_KO[r.product_status]}</span>
+      <div class="muted">${r.product_name}</div>
+      <div class="muted">${r.last_message || '메시지 없음'}</div></div></div>`;
+  }).join('') || '<p class="muted">채팅이 없습니다.</p>';
+  const q = new URLSearchParams(location.search).get('room');
+  if (q) {
+    const r = rooms.find(x => x.id == q);
+    if (r) openRoom(r.id, r.buyer === me.username ? r.seller : r.buyer, r.product_name);
+  }
+}
+async function openRoom(id, other, product) {
+  currentRoom = id;
+  document.getElementById('roomTitle').textContent = `${other} · ${product}`;
+  document.getElementById('input').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  socket.emit('join', id);
+  const msgs = await api(`/api/chat/rooms/${id}/messages`);
+  const box = document.getElementById('chatBox');
+  box.innerHTML = '';
+  msgs.forEach(append);
+}
+function append(m) {
+  const box = document.getElementById('chatBox');
+  const div = document.createElement('div');
+  div.className = 'bubble ' + (m.username === me.username ? 'me' : 'other');
+  div.textContent = m.content;
+  div.title = `${m.username} · ${m.created_at}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+function send() {
+  const input = document.getElementById('input');
+  if (!input.value.trim() || !currentRoom) return;
+  socket.emit('message', { roomId: currentRoom, content: input.value });
+  input.value = '';
+}
+load();
+</script></body></html>

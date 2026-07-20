@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>상품 등록</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:560px">
+  <div class="card">
+    <h1>새 상품 등록</h1>
+    <input id="name" placeholder="상품명">
+    <textarea id="description" rows="4" placeholder="상품 설명"></textarea>
+    <input id="price" type="number" placeholder="가격 (원)">
+    <select id="category">
+      <option>디지털기기</option><option>가구/인테리어</option><option>의류</option>
+      <option>도서</option><option>생활가전</option><option selected>기타</option>
+    </select>
+    <input id="image_url" placeholder="사진 URL (선택)">
+    <div id="msg" class="msg"></div>
+    <button style="width:100%" onclick="submit()">등록하기</button>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+async function submit() {
+  try {
+    const r = await api('/api/products', 'POST', {
+      name: document.getElementById('name').value,
+      description: document.getElementById('description').value,
+      price: +document.getElementById('price').value,
+      category: document.getElementById('category').value,
+      image_url: document.getElementById('image_url').value });
+    location.href = '/product.html?id=' + r.productId;
+  } catch (e) { show('msg', e.message); }
+}
+renderNav().then(me => { if (!me) location.href = '/login.html'; });
+</script></body></html>

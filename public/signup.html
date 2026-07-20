@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>회원가입</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:420px">
+  <div class="card">
+    <h1>회원가입</h1>
+    <div class="row"><input id="username" placeholder="아이디 (영문/숫자 4~20자)"><button class="secondary" onclick="check()">중복확인</button></div>
+    <input id="password" type="password" placeholder="비밀번호 (8자 이상, 영문+숫자)">
+    <input id="password2" type="password" placeholder="비밀번호 확인">
+    <textarea id="bio" placeholder="소개글 (선택)" rows="3"></textarea>
+    <div id="msg" class="msg"></div>
+    <button style="width:100%" onclick="signup()">가입하기</button>
+    <p class="muted" style="margin-top:10px">이미 계정이 있나요? <a href="/login.html">로그인</a></p>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+async function check() {
+  const u = document.getElementById('username').value;
+  try {
+    const r = await api('/api/users/check?username=' + encodeURIComponent(u));
+    show('msg', r.available ? '사용 가능한 아이디입니다.' : '이미 사용 중인 아이디입니다.', r.available ? 'ok' : 'err');
+  } catch (e) { show('msg', e.message); }
+}
+async function signup() {
+  const [u, p, p2] = ['username','password','password2'].map(i => document.getElementById(i).value);
+  if (p !== p2) return show('msg', '비밀번호가 일치하지 않습니다.');
+  try {
+    await api('/api/users/signup', 'POST', { username: u, password: p, bio: document.getElementById('bio').value });
+    show('msg', '가입 완료! 로그인 페이지로 이동합니다.', 'ok');
+    setTimeout(() => location.href = '/login.html', 800);
+  } catch (e) { show('msg', e.message); }
+}
+renderNav();
+</script></body></html>

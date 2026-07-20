@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>상품 상세</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:640px">
+  <div class="card">
+    <div id="thumb" class="thumb" style="height:260px;border-radius:8px;margin-bottom:14px;font-size:3em"></div>
+    <h1 id="name"></h1>
+    <p><span id="statusBadge" class="badge"></span> <span id="meta" class="muted"></span></p>
+    <p class="price" id="price" style="font-size:1.3em;margin:8px 0"></p>
+    <p id="desc" style="white-space:pre-wrap"></p>
+    <div id="msg" class="msg"></div>
+    <div id="buyerActions"></div>
+    <div id="sellerActions"></div>
+  </div>
+  <div class="card"><h2>상태 변경 이력</h2><ul id="logs" class="muted"></ul></div>
+</div>
+<script src="/app.js"></script>
+<script>
+const pid = new URLSearchParams(location.search).get('id');
+let me, p;
+async function load() {
+  me = await renderNav();
+  p = await api('/api/products/' + pid);
+  document.getElementById('name').textContent = p.name;
+  const t = document.getElementById('thumb');
+  if (p.image_url) t.style.backgroundImage = `url('${p.image_url}')`; else t.textContent = '📦';
+  const sb = document.getElementById('statusBadge');
+  sb.textContent = STATUS_KO[p.status]; sb.className = 'badge ' + p.status;
+  document.getElementById('meta').innerHTML =
+    `${p.seller_region || p.region || '지역 미설정'} · 판매자 <a href="/profile.html?id=${p.seller_id}">${p.seller}</a> · ${p.created_at}`;
+  document.getElementById('price').textContent = fmt(p.price);
+  document.getElementById('desc').textContent = p.description;
+  document.getElementById('logs').innerHTML = p.statusLogs.map(l => `<li>${STATUS_KO[l.status]} — ${l.created_at}</li>`).join('');
+
+  const buyer = document.getElementById('buyerActions');
+  const seller = document.getElementById('sellerActions');
+  if (me && me.id === p.seller_id) {
+    seller.innerHTML = `
+      <h2>판매자 메뉴</h2>
+      <button onclick="setStatus('selling')">판매중</button>
+      <button onclick="setStatus('reserved')">예약중</button>
+      <button onclick="setStatus('sold')">판매완료</button>
+      <button class="danger" onclick="del()">삭제</button>
+      <div id="pendingTx"></div>`;
+    const txs = await api('/api/transactions');
+    const pend = txs.find(t => t.product_id == pid && t.status === 'pending');
+    if (pend) document.getElementById('pendingTx').innerHTML =
+      `<p class="muted">에스크로 진행 중 (구매자: ${pend.sender_name}, ${fmt(pend.amount)})</p>
+       <button class="secondary" onclick="cancelTx(${pend.id})">거래 취소(환불)</button>`;
+  } else if (me) {
+    const soldOut = p.status === 'sold';
+    let html = `
+      <button ${soldOut ? 'disabled' : ''} onclick="buy()">구매하기 (에스크로)</button>
+      <button ${soldOut ? 'disabled' : ''} class="secondary" onclick="openChat()">채팅하기</button>
+      <button class="danger" onclick="location.href='/report.html?type=product&id=${pid}'">신고</button>`;
+    const txs = await api('/api/transactions');
+    const myPend = txs.find(t => t.product_id == pid && t.status === 'pending' && t.sender_name === me.username);
+    if (myPend) html += `<p class="muted">결제 대금 ${fmt(myPend.amount)}이 안전하게 보관 중입니다.</p>
+      <button onclick="confirmTx(${myPend.id})">구매 확정 (판매자에게 정산)</button>`;
+    buyer.innerHTML = html;
+  } else {
+    buyer.innerHTML = `<p class="muted"><a href="/login.html">로그인</a> 후 구매/채팅할 수 있습니다.</p>`;
+  }
+}
+async function buy() {
+  try { const r = await api(`/api/products/${pid}/purchase`, 'POST'); show('msg', r.message, 'ok'); load(); }
+  catch (e) { show('msg', e.message); }
+}
+async function confirmTx(id) {
+  try { const r = await api(`/api/transactions/${id}/confirm`, 'POST'); show('msg', r.message, 'ok'); load(); }
+  catch (e) { show('msg', e.message); }
+}
+async function cancelTx(id) {
+  try { const r = await api(`/api/transactions/${id}/cancel`, 'POST'); show('msg', r.message, 'ok'); load(); }
+  catch (e) { show('msg', e.message); }
+}
+async function setStatus(s) {
+  try { await api('/api/products/' + pid, 'PATCH', { status: s }); load(); }
+  catch (e) { show('msg', e.message); }
+}
+async function del() {
+  if (!confirm('상품을 삭제할까요?')) return;
+  try { await api('/api/products/' + pid, 'DELETE'); location.href = '/'; }
+  catch (e) { show('msg', e.message); }
+}
+async function openChat() {
+  try { const r = await api('/api/chat/rooms', 'POST', { productId: +pid }); location.href = '/chat.html?room=' + r.roomId; }
+  catch (e) { show('msg', e.message); }
+}
+load();
+</script></body></html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>관리자</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container">
+  <h1>관리자 대시보드</h1>
+  <div class="tabs">
+    <button id="tab-reports" onclick="tab('reports')">신고 검토</button>
+    <button id="tab-users" onclick="tab('users')">유저 관리</button>
+    <button id="tab-products" onclick="tab('products')">상품 관리</button>
+    <button id="tab-transactions" onclick="tab('transactions')">거래 내역</button>
+  </div>
+  <div id="msg" class="msg"></div>
+  <div class="card"><div id="content"></div></div>
+</div>
+<script src="/app.js"></script>
+<script>
+let cur = 'reports';
+async function tab(name) {
+  cur = name;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.id === 'tab-' + name));
+  const c = document.getElementById('content');
+  try {
+    if (name === 'reports') {
+      const rows = await api('/api/admin/reports');
+      c.innerHTML = `<h2>신고 목록 (검토 대기 우선)</h2>
+        <table><thead><tr><th>ID</th><th>대상</th><th>사유</th><th>신고자</th><th>일시</th><th>상태</th><th>처리</th></tr></thead><tbody>` +
+        rows.sort((a,b) => (a.status==='pending'?0:1) - (b.status==='pending'?0:1)).map(r => `
+        <tr><td>${r.id}</td><td>${r.target_type === 'user' ? '유저' : '상품'} #${r.target_id}</td>
+        <td>${r.reason}</td><td>${r.reporter}</td><td>${r.created_at}</td>
+        <td><span class="badge ${r.status === 'pending' ? 'pending' : r.status === 'confirmed' ? 'cancelled' : 'confirmed'}">${
+          {pending:'검토 대기',confirmed:'제재 확정',rejected:'기각(해제)'}[r.status]}</span></td>
+        <td>${r.status === 'pending' ? `
+          <button class="danger" onclick="act('reports/${r.id}/confirm')">제재 확정</button>
+          <button class="secondary" onclick="act('reports/${r.id}/reject')">기각</button>` : ''}</td></tr>`).join('') + '</tbody></table>';
+    } else if (name === 'users') {
+      const rows = await api('/api/admin/users');
+      c.innerHTML = `<h2>유저 목록</h2>
+        <table><thead><tr><th>ID</th><th>아이디</th><th>인증</th><th>지역</th><th>상태</th><th>숨김</th><th>처리</th></tr></thead><tbody>` +
+        rows.map(u => `
+        <tr><td>${u.id}</td><td>${u.username}${u.role === 'admin' ? ' 👑' : ''}</td>
+        <td>${u.verified ? '✅' : '—'}</td><td>${u.region || '—'}</td>
+        <td><span class="badge ${u.status === 'active' ? 'confirmed' : 'cancelled'}">${STATUS_KO[u.status]}</span></td>
+        <td>${u.hidden ? '🙈' : '—'}</td>
+        <td>${u.role === 'admin' ? '' : `
+          <button class="secondary" onclick="patchUser(${u.id},'active',0)">정상화</button>
+          <button onclick="patchUser(${u.id},'dormant',null)">휴면</button>
+          <button class="danger" onclick="patchUser(${u.id},'suspended',null)">정지</button>`}</td></tr>`).join('') + '</tbody></table>';
+    } else if (name === 'products') {
+      const rows = await api('/api/admin/products');
+      c.innerHTML = `<h2>상품 목록</h2>
+        <table><thead><tr><th>ID</th><th>상품명</th><th>가격</th><th>판매자</th><th>상태</th><th>숨김</th><th>처리</th></tr></thead><tbody>` +
+        rows.map(p => `
+        <tr><td>${p.id}</td><td><a href="/product.html?id=${p.id}">${p.name}</a></td><td>${fmt(p.price)}</td>
+        <td>${p.seller}</td><td><span class="badge ${p.status}">${STATUS_KO[p.status]}</span></td>
+        <td>${p.hidden ? '🙈' : '—'}</td>
+        <td><button class="secondary" onclick="patchProduct(${p.id}, ${p.hidden ? 0 : 1})">${p.hidden ? '숨김 해제' : '숨김'}</button></td></tr>`).join('') + '</tbody></table>';
+    } else {
+      const rows = await api('/api/admin/transactions');
+      c.innerHTML = `<h2>전체 거래 내역</h2>
+        <table><thead><tr><th>ID</th><th>유형</th><th>보낸이</th><th>받는이</th><th>상품</th><th>금액</th><th>상태</th><th>일시</th></tr></thead><tbody>` +
+        rows.map(t => `
+        <tr><td>${t.id}</td><td>${t.type === 'charge' ? '충전' : '송금'}</td>
+        <td>${t.sender_name || '—'}</td><td>${t.receiver_name}</td><td>${t.product_name || '—'}</td>
+        <td>${fmt(t.amount)}</td><td><span class="badge ${t.status}">${STATUS_KO[t.status]}</span></td>
+        <td>${t.created_at}</td></tr>`).join('') + '</tbody></table>';
+    }
+  } catch (e) { show('msg', e.message); }
+}
+async function act(path) { try { await api('/api/admin/' + path, 'POST'); show('msg', '처리되었습니다.', 'ok'); tab(cur); } catch (e) { show('msg', e.message); } }
+async function patchUser(id, status, hidden) {
+  try { await api('/api/admin/users/' + id, 'PATCH', { status, hidden }); tab(cur); } catch (e) { show('msg', e.message); }
+}
+async function patchProduct(id, hidden) {
+  try { await api('/api/admin/products/' + id, 'PATCH', { hidden }); tab(cur); } catch (e) { show('msg', e.message); }
+}
+renderNav().then(me => {
+  if (!me || me.role !== 'admin') { alert('관리자만 접근할 수 있습니다.'); location.href = '/'; return; }
+  tab('reports');
+});
+</script></body></html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>로그인</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:420px">
+  <div class="card">
+    <h1>로그인</h1>
+    <input id="username" placeholder="아이디">
+    <input id="password" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()">
+    <div id="msg" class="msg"></div>
+    <button style="width:100%" onclick="login()">로그인</button>
+    <p class="muted" style="margin-top:10px">계정이 없나요? <a href="/signup.html">회원가입</a></p>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+async function login() {
+  try {
+    await api('/api/auth/login', 'POST', {
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value });
+    location.href = '/';
+  } catch (e) { show('msg', e.message); }
+}
+renderNav();
+</script></body></html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>중고마켓</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container">
+  <div class="card">
+    <div class="row" style="flex-wrap:wrap">
+      <input id="keyword" placeholder="검색어" style="flex:2;min-width:140px">
+      <select id="category" style="flex:1;min-width:100px">
+        <option value="">전체 카테고리</option>
+        <option>디지털기기</option><option>가구/인테리어</option><option>의류</option>
+        <option>도서</option><option>생활가전</option><option>기타</option>
+      </select>
+      <input id="min" type="number" placeholder="최소가" style="flex:1;min-width:80px">
+      <input id="max" type="number" placeholder="최대가" style="flex:1;min-width:80px">
+      <select id="sort" style="flex:1;min-width:100px">
+        <option value="latest">최신순</option>
+        <option value="price_asc">낮은 가격순</option>
+        <option value="price_desc">높은 가격순</option>
+      </select>
+      <label class="row muted" style="white-space:nowrap"><input type="checkbox" id="nearby" style="width:auto"> 내 근처 5km</label>
+      <button onclick="load()">검색</button>
+    </div>
+  </div>
+  <div id="list" class="grid"></div>
+  <p id="empty" class="muted" style="display:none;text-align:center;padding:30px">검색 결과가 없습니다.</p>
+</div>
+<script src="/app.js"></script>
+<script>
+async function load() {
+  const q = new URLSearchParams();
+  for (const k of ['keyword','category','min','max','sort']) {
+    const v = document.getElementById(k).value; if (v) q.set(k, v);
+  }
+  if (document.getElementById('nearby').checked) q.set('nearby', '1');
+  const rows = await api('/api/products?' + q);
+  const list = document.getElementById('list');
+  list.innerHTML = rows.map(p => `
+    <div class="product-card" onclick="location.href='/product.html?id=${p.id}'">
+      <div class="thumb" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">${p.image_url ? '' : '📦'}</div>
+      <div class="info">
+        <div>${p.name} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
+        <div class="price">${fmt(p.price)}</div>
+        <div class="muted">${p.region || '지역 미설정'} · ${p.seller}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('empty').style.display = rows.length ? 'none' : 'block';
+}
+renderNav().then(load);
+</script></body></html>

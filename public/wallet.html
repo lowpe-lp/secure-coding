@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>지갑</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container" style="max-width:640px">
+  <div class="card">
+    <h1>내 지갑</h1>
+    <p style="font-size:1.5em" id="balance"></p>
+    <p class="muted" id="escrow"></p>
+  </div>
+  <div class="card">
+    <h2>잔액 충전</h2>
+    <div class="row"><input id="amount" type="number" placeholder="충전 금액 (원)"><button onclick="charge()">충전</button></div>
+    <div id="msg" class="msg"></div>
+  </div>
+  <div class="card">
+    <h2>거래 내역</h2>
+    <table><thead><tr><th>일시</th><th>유형</th><th>내용</th><th>금액</th><th>상태</th></tr></thead>
+    <tbody id="rows"></tbody></table>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script>
+let me;
+async function load() {
+  me = await renderNav();
+  if (!me) return location.href = '/login.html';
+  const w = await api('/api/wallet');
+  document.getElementById('balance').textContent = fmt(w.balance);
+  document.getElementById('escrow').textContent = w.escrowHold > 0 ? `에스크로 보관 중: ${fmt(w.escrowHold)}` : '';
+  const txs = await api('/api/transactions');
+  document.getElementById('rows').innerHTML = txs.map(t => {
+    const isCharge = t.type === 'charge';
+    const outgoing = t.sender_name === me.username;
+    const desc = isCharge ? '잔액 충전' : `${t.product_name || '상품'} · ${outgoing ? '→ ' + t.receiver_name : '← ' + t.sender_name}`;
+    const sign = isCharge || !outgoing ? '+' : '−';
+    return `<tr><td>${t.created_at}</td><td>${isCharge ? '충전' : '송금'}</td><td>${desc}</td>
+      <td>${sign}${fmt(t.amount)}</td><td><span class="badge ${t.status}">${STATUS_KO[t.status]}</span></td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="muted">거래 내역이 없습니다.</td></tr>';
+}
+async function charge() {
+  try { await api('/api/wallet/charge', 'POST', { amount: +document.getElementById('amount').value }); show('msg', '충전 완료', 'ok'); load(); }
+  catch (e) { show('msg', e.message); }
+}
+load();
+</script></body></html>

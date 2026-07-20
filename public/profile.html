@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>프로필</title>
+<link rel="stylesheet" href="/style.css"></head><body>
+<div class="container">
+  <div class="card">
+    <h1 id="name"></h1>
+    <p id="meta" class="muted"></p>
+    <p id="bio" style="margin-top:8px"></p>
+    <button class="danger" id="reportBtn" style="display:none">이 유저 신고</button>
+  </div>
+  <h2>판매 상품</h2>
+  <div id="list" class="grid"></div>
+</div>
+<script src="/app.js"></script>
+<script>
+const uid = new URLSearchParams(location.search).get('id');
+async function load() {
+  const me = await renderNav();
+  const u = await api('/api/users/' + uid);
+  document.getElementById('name').textContent = u.username + (u.verified ? ' ✅' : '');
+  document.getElementById('meta').textContent = `${u.region || '지역 미설정'} · 가입일 ${u.created_at}`;
+  document.getElementById('bio').textContent = u.bio || '소개글이 없습니다.';
+  if (me && me.id !== u.id) {
+    const b = document.getElementById('reportBtn');
+    b.style.display = 'inline-block';
+    b.onclick = () => location.href = `/report.html?type=user&id=${u.id}`;
+  }
+  document.getElementById('list').innerHTML = u.products.map(p => `
+    <div class="product-card" onclick="location.href='/product.html?id=${p.id}'">
+      <div class="thumb" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">${p.image_url ? '' : '📦'}</div>
+      <div class="info"><div>${p.name} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
+      <div class="price">${fmt(p.price)}</div></div>
+    </div>`).join('') || '<p class="muted">판매 중인 상품이 없습니다.</p>';
+}
+load();
+</script></body></html>
