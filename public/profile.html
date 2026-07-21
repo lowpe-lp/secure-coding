@@ -26,7 +26,7 @@ async function load() {
   }
   document.getElementById('list').innerHTML = u.products.map(p => `
     <div class="product-card" onclick="location.href='/product.html?id=${p.id}'">
-      <div class="thumb" style="${p.image_url ? `background-image:url('${p.image_url}')` : ''}">${p.image_url ? '' : '📦'}</div>
+      <div class="thumb" style="${p.image_url ? `background-image:url('${esc(p.image_url)}')` : ''}">${p.image_url ? '' : '📦'}</div>
      <div class="info"><div>${esc(p.name)} <span class="badge ${p.status}">${STATUS_KO[p.status]}</span></div>
       <div class="price">${fmt(p.price)}</div></div>
     </div>`).join('') || '<p class="muted">판매 중인 상품이 없습니다.</p>';
